@@ -1,6 +1,7 @@
 package com.seatlock.service;
 
 import com.seatlock.model.LockStatus;
+import com.seatlock.model.Seat;
 import com.seatlock.model.SeatLock;
 import com.seatlock.model.SeatStatus;
 import com.seatlock.repository.SeatLockRepository;
@@ -12,17 +13,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Periodic background task that expires stale seat locks.
  *
- * <p>Runs every 30 seconds.  Any {@code ACTIVE} lock whose {@code expiresAt}
+ * <p>Runs every 5 seconds. Any {@code ACTIVE} lock whose {@code expiresAt}
  * is in the past is transitioned to {@code EXPIRED}, and the associated seat
- * is set back to {@code AVAILABLE} so that other users can select it.</p>
- *
- * <p>This ensures that seats are never permanently stuck in {@code LOCKED}
- * status if a user abandons the page without confirming or cancelling.</p>
+ * is set back to {@code AVAILABLE} and saved to the database so that users
+ * can immediately select it again.</p>
  */
 @Service
 public class LockExpiryService {
@@ -39,12 +39,9 @@ public class LockExpiryService {
     }
 
     /**
-     * Scheduled task: expire stale locks every 30 seconds.
-     *
-     * <p>Uses a dedicated transaction so that the cleanup is atomic and does
-     * not interfere with user-initiated transactions.</p>
+     * Scheduled task: expire stale locks every 5 seconds.
      */
-    @Scheduled(fixedRate = 30_000)
+    @Scheduled(fixedRate = 5_000)
     @Transactional
     public void expireStaleLocks() {
         Instant now = Instant.now();
@@ -52,21 +49,25 @@ public class LockExpiryService {
                 .findExpiredLocks(LockStatus.ACTIVE, now);
 
         if (expired.isEmpty()) {
-            return; // nothing to do — keep log clean
+            return;
         }
 
         log.info("Expiring {} stale lock(s)", expired.size());
 
+        List<Seat> seatsToRelease = new ArrayList<>();
         for (SeatLock lock : expired) {
             lock.setStatus(LockStatus.EXPIRED);
-            lock.getSeat().setStatus(SeatStatus.AVAILABLE);
+            Seat seat = lock.getSeat();
+            seat.setStatus(SeatStatus.AVAILABLE);
+            seatsToRelease.add(seat);
 
             log.debug("Expired lock {} — seat {} (session {})",
                     lock.getId(),
-                    lock.getSeat().getSeatNumber(),
+                    seat.getSeatNumber(),
                     lock.getSessionId());
         }
 
+        seatRepository.saveAll(seatsToRelease);
         seatLockRepository.saveAll(expired);
 
         log.info("Expired {} lock(s) — seats released back to AVAILABLE", expired.size());

@@ -123,11 +123,16 @@ export function useBooking({ onToast, refreshSeats, onBookingConfirmed }) {
   }, [sessionId, onToast, refreshSeats]);
 
   /** Called when countdown expires. */
-  const handleExpiry = useCallback(() => {
+  const handleExpiry = useCallback(async () => {
     onToast('⏰ Your reservation has expired!', 'error');
+    try {
+      await cancelLock(sessionId);
+    } catch {
+      // even if cancel fails, proceed with reset
+    }
     resetFlow();
     refreshSeats();
-  }, [onToast, refreshSeats]);
+  }, [sessionId, onToast, refreshSeats]);
 
   function resetFlow() {
     setSelectedSeatIds([]);

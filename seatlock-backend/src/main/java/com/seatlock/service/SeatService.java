@@ -43,23 +43,28 @@ public class SeatService {
     private final SeatRepository seatRepository;
     private final SeatLockRepository seatLockRepository;
     private final BookingRepository bookingRepository;
+    private final LockExpiryService lockExpiryService;
 
     public SeatService(SeatRepository seatRepository,
                        SeatLockRepository seatLockRepository,
-                       BookingRepository bookingRepository) {
+                       BookingRepository bookingRepository,
+                       LockExpiryService lockExpiryService) {
         this.seatRepository = seatRepository;
         this.seatLockRepository = seatLockRepository;
         this.bookingRepository = bookingRepository;
+        this.lockExpiryService = lockExpiryService;
     }
 
     // ── GET /api/seats ───────────────────────────────────────────────────
 
     /**
      * Returns all 20 seats with their current status.
-     * No locking needed — this is a simple read.
+     * Stale locks are automatically expired first so that seats whose
+     * 2-minute timer has passed are returned as AVAILABLE.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<SeatDTO> getAllSeats() {
+        lockExpiryService.expireStaleLocks();
         return seatRepository.findAll()
                 .stream()
                 .map(SeatDTO::from)
@@ -86,6 +91,9 @@ public class SeatService {
      */
     @Transactional
     public LockResponse lockSeats(LockRequest request) {
+        // Expire any past-due locks first
+        lockExpiryService.expireStaleLocks();
+
         // 1. Sort IDs to guarantee consistent lock ordering → prevents deadlocks
         List<Long> sortedIds = request.seatIds().stream().sorted().toList();
 

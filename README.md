@@ -16,7 +16,7 @@ A production-grade train seat booking application where **100 users may attempt 
 - [Load Testing](#-load-testing)
 - [Docker Deployment](#-docker-deployment)
 - [Project Structure](#-project-structure)
-- [Screenshots](#-screenshots)
+- [Demonstration Video](#-demonstration-video)
 - [AI Disclosure](#-ai-disclosure)
 
 ---
@@ -377,16 +377,11 @@ goolluck-consulting/
 
 ---
 
-## 📸 Screenshots
+## 🎥 Demonstration Video
 
-*Run the application locally and capture screenshots for your submission.*
+A comprehensive walkthrough showing the local run, seat locking, real-time countdown timer, booking confirmation, cancellation/expiry, and concurrent booking handling is available on Loom:
 
-1. **Seat Map** — All 20 seats available (green)
-2. **Seat Selection** — Multiple seats selected (blue highlight)
-3. **Locked State** — Countdown timer running, seats orange
-4. **Booking Confirmed** — Success message, seats turn grey
-5. **Concurrent Conflict** — 409 error when seat is already locked
-6. **Load Test Results** — Terminal showing zero duplicate bookings
+👉 **[Watch the SeatLock Demo on Loom](https://www.loom.com/share/3ae4de68188d4eafbe99e8d288a16cf0)**
 
 ---
 
