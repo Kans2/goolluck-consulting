@@ -1,0 +1,76 @@
+# ============================================================================
+# SeatLock — Application Configuration
+# ============================================================================
+
+spring:
+  application:
+    name: seatlock-backend
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}   # 'default' = PostgreSQL, 'h2' = in-memory
+
+  # ── SQL init (schema.sql + data.sql) ──────────────────────────────────
+  sql:
+    init:
+      mode: always
+
+  # ── JPA / Hibernate ───────────────────────────────────────────────────
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none            # We rely on schema.sql for DDL
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+
+  # ── Default datasource: PostgreSQL ────────────────────────────────────
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/seatlock}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    com.seatlock: INFO
+    org.hibernate.SQL: WARN
+
+# ============================================================================
+# Profile: h2 — In-memory H2 for quick local testing
+# ============================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+
+  datasource:
+    url: jdbc:h2:mem:seatlock;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    com.seatlock: DEBUG
+    org.hibernate.SQL: DEBUG

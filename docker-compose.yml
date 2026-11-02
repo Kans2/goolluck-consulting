@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL Database ────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: seatlock-db
+    environment:
+      POSTGRES_DB: seatlock
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Spring Boot Backend ────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./seatlock-backend
+      dockerfile: Dockerfile
+    container_name: seatlock-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/seatlock
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── React Frontend (dev) ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./seatlock-frontend
+      dockerfile: Dockerfile
+    container_name: seatlock-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+

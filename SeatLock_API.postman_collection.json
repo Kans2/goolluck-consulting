@@ -1,0 +1,140 @@
+{
+	"info": {
+		"_postman_id": "c1f78e4a-9e12-4d2b-b8c1-seatlock0001",
+		"name": "SeatLock API - Concurrent Train Seat Booking",
+		"description": "Postman collection for testing the SeatLock REST API endpoints, temporary locking, confirmation, cancellation, and concurrency.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Get All Seats",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/seats",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"seats"
+					]
+				},
+				"description": "Retrieve all 20 seats with their current statuses (AVAILABLE, LOCKED, or BOOKED)."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Lock Seats (Temporary 2-min Lock)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"seatIds\": [1],\n    \"sessionId\": \"{{sessionId}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/seats/lock",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"seats",
+						"lock"
+					]
+				},
+				"description": "Temporarily lock selected seats for 2 minutes for the checkout phase. Employs pessimistic write locking in the database."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Confirm Booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"sessionId\": \"{{sessionId}}\",\n    \"passengerName\": \"John Doe\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/seats/confirm",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"seats",
+						"confirm"
+					]
+				},
+				"description": "Confirm the booking for locked seats and persist the booking records in PostgreSQL."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Cancel Seat Lock",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/seats/lock/{{sessionId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"seats",
+						"lock",
+						"{{sessionId}}"
+					]
+				},
+				"description": "Cancel active reservation locks for a given session ID, returning the seats to AVAILABLE."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get All Bookings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/bookings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bookings"
+					]
+				},
+				"description": "Retrieve the list of all confirmed bookings."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "sessionId",
+			"value": "550e8400-e29b-41d4-a716-446655440000",
+			"type": "string"
+		}
+	]
+}
+
